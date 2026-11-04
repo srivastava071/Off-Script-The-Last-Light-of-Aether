@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+/* Bright cartoon theme: thick ink outlines, flat colours, chunky shadows. */
+@theme {
+  --font-display: "Fredoka", "Comic Sans MS", system-ui, sans-serif;
+  --font-sans: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-ink: #1d2142;
+  --color-night: #dff4ff; /* page sky */
+  --color-deep: #ffffff;
+  --color-panel: #ffffff;
+  --color-panel-2: #fff3c4;
+  --color-line: #c5d0e0;
+  --color-parchment: #1d2142; /* main text */
+  --color-muted: #556079;
+  --color-amber: #f76707;
+  --color-teal: #0c8599;
+  --color-danger: #e03131;
+  --color-ok: #2f9e44;
+  --color-sky: #1971c2;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+  body {
+    background:
+      radial-gradient(60px 26px at 12% 9%, #fff 98%, transparent),
+      radial-gradient(44px 22px at 16% 7%, #fff 98%, transparent),
+      radial-gradient(70px 28px at 82% 14%, #fff 98%, transparent),
+      radial-gradient(48px 22px at 86% 11%, #fff 98%, transparent),
+      radial-gradient(64px 24px at 55% 88%, #ffffffcc 98%, transparent),
+      linear-gradient(180deg, #8fd8ff 0%, #c7ecff 45%, #e9f8ff 100%);
+    background-attachment: fixed;
+    color: var(--color-parchment);
+    font-family: var(--font-sans);
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-amber);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .panel {
+    background: var(--color-panel);
+    border: 3px solid var(--color-ink);
+    border-radius: 18px;
+    box-shadow: 0 5px 0 var(--color-ink);
+  }
+  .panel-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--color-ink);
+  }
+  /* Bubbly cartoon headline: coloured fill, ink outline, offset shadow. */
+  .glow-text {
+    -webkit-text-stroke: 2px var(--color-ink);
+    paint-order: stroke fill;
+    text-shadow: 3px 4px 0 var(--color-ink);
+  }
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-rise {
+  animation: rise-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+.animate-wobble {
+  animation: wobble 2.4s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes beam {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.55; }
+}
+
+/* Browser surfaces in the palette, not the defaults. */
+::selection {
+  background: #ffd43b;
+  color: #1d2142;
+}
+input,
+textarea {
+  caret-color: #f76707;
+}

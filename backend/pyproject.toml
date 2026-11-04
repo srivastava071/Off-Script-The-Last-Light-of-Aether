@@ -1,0 +1,9 @@
+[project]
+name = "off-script-backend"
+version = "0.1.0"
+description = "Off Script: The Last Light of Aether - simulation backend"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
