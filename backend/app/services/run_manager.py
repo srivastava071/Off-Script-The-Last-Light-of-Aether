@@ -31,6 +31,7 @@ from app.models.actions import ActionResult, ProposedAction
 from app.models.enums import ActionType, EventKind, GameMode, RunStatus
 from app.models.world import WorldState
 from app.persistence.repository import RunRepository
+from app.services.journal import TeamJournal
 from app.services.llm import LLMResponse, LLMService
 from app.services.rate_limit import TokenBucket
 
@@ -73,6 +74,7 @@ class ManagedRun:
     deliberating: set[str] = field(default_factory=set)
     narration_requested: bool = False
     chapters_requested: set[int] = field(default_factory=set)
+    journaled: bool = False  # the team journal has recorded this finished run
 
     @property
     def world(self) -> WorldState:
@@ -83,6 +85,7 @@ class RunManager:
     def __init__(self, settings: Settings, repo: RunRepository, llm: LLMService | None = None):
         self.settings = settings
         self.repo = repo
+        self.journal = TeamJournal(repo)
         self.llm = llm
         self._runs: dict[str, ManagedRun] = {}
         self._create_lock = asyncio.Lock()
@@ -117,6 +120,7 @@ class RunManager:
         world = Run.create(
             mode, player_character, tick_seconds=self.settings.sim_tick_seconds,
             deadline_seconds=self.settings.game_deadline_seconds,
+            lessons=self.journal.lessons_for(mode, player_character),
         ).world  # raises RunError on a bad configuration
         token = secrets.token_urlsafe(24)
         managed = self._wrap(world, _hash(token))
@@ -429,6 +433,7 @@ class RunManager:
                     mind = world.minds[cid]
                     mind.preferred_strategy = chosen.strategy
                     mind.preference_expires_at = world.clock.now + PREFERENCE_TTL_SECONDS
+                    mind.preference_thought = choice.thought or None if choice else None
                     ai.deliberations_applied += 1
                     thought = f' "{choice.thought}"' if choice and choice.thought else ""
                     world.record(
@@ -473,6 +478,12 @@ class RunManager:
 
     def _after_change(self, m: ManagedRun) -> None:
         self._persist(m)
+        if m.run.status is RunStatus.FINISHED and not m.journaled:
+            m.journaled = True
+            try:
+                self.journal.after_finish(m.world)
+            except Exception:  # pragma: no cover - the journal must never break a finished game
+                log.exception("team journal failed for run %s", m.world.run_id)
         self._schedule_ai(m)
 
     def _persist(self, m: ManagedRun, history: bool = False) -> None:

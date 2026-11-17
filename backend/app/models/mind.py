@@ -86,6 +86,44 @@ class Order(BaseModel):
     started_at: int | None = None  # set when the action itself begins; it is done once the character is idle again
 
 
+class OptionTrace(BaseModel):
+    strategy: str
+    summary: str
+    status: str = "pursuing"
+
+
+class DecisionTrace(BaseModel):
+    """Why the character does what it does: the options its rules offered and who picked one (Mind View)."""
+
+    since: int  # when this choice was first made
+    options: list[OptionTrace] = []
+    chosen: str
+    chosen_by: Literal["rules", "ai", "lesson", "player"] = "rules"
+    trigger: str | None = None  # the news that prompted this choice, if any
+    thought: str | None = None  # the AI's one-line reason, or the lesson that was applied
+
+
+class WaitEpisode(BaseModel):
+    """A stretch of time the character spent waiting or blocked, and what else it could have done."""
+
+    strategy: str
+    summary: str
+    location_id: str | None = None
+    started_at: int
+    ended_at: int | None = None
+    alternatives: list[OptionTrace] = []
+
+
+class ActiveLesson(BaseModel):
+    """A lesson from an earlier game: where the rules would pick ``instead_of``, pick ``prefer`` (if it is an option)."""
+
+    id: int
+    instead_of: str
+    prefer: str
+    text: str
+    status: Literal["kept", "trying"] = "kept"
+
+
 class Mind(BaseModel):
     beliefs: Beliefs
     memories: list[Memory] = []
@@ -102,5 +140,10 @@ class Mind(BaseModel):
     # Strategy preference from an LLM deliberation; used only while it remains a valid option.
     preferred_strategy: str | None = None
     preference_expires_at: int | None = None
+    preference_thought: str | None = None  # the LLM's one-line reason for that preference
     deliberations: int = 0
+    trace: DecisionTrace | None = None
+    wait_log: list[WaitEpisode] = []
+    lessons: list[ActiveLesson] = []  # from the team journal, loaded when the run is created
+    lessons_used: list[int] = []      # ids of lessons that actually changed a decision in this run
     orders: list[Order] = []  # player commands to carry out, in order, before resuming own plans

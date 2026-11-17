@@ -1,16 +1,23 @@
 import Phaser from "phaser";
 
-import type { CharacterView, LocationView, StateView } from "../types/api";
+import type { BeliefFact, CharacterView, LocationView, StateView } from "../types/api";
 import type { Bubble } from "./bubbles";
 import {
   characterPosition, controlPoint, pointOnCurve, projectedSimTime, ROUTE_BEND, sampleCurve, type Point,
 } from "./geometry";
 import { paintScenery } from "./scenery";
 
+/** Mind View on the map: one character's picture of the island, drawn over the real one. */
+export interface MindOverlay {
+  name: string;
+  beliefs: BeliefFact[];
+}
+
 export interface MapFrame {
   state: StateView;
   receivedAt: number;
   focus: string | null;
+  mind?: MindOverlay | null;
 }
 
 const W = 1000;
@@ -42,6 +49,7 @@ const C = {
   cheek: 0xff8fab,
 };
 
+const MIND = 0x7048e8; // Mind View: what a character believes
 const hex = (color: string) => Phaser.Display.Color.HexStringToColor(color).color;
 
 const COAST: [number, number][] = [
@@ -110,6 +118,8 @@ export class IslandScene extends Phaser.Scene {
   private nextBolt = 0;
   private toons = new Map<string, Toon>();
   private drawnKey = "";
+  private mindLayer!: Phaser.GameObjects.Container;
+  private mindKey = "";
   private nextLightning = 0;
   private celebrated = false;
   onSelect: (id: string) => void = () => {};
@@ -140,6 +150,7 @@ export class IslandScene extends Phaser.Scene {
     this.tweens.add({ targets: this.goalBanner, scale: 1.07, yoyo: true, repeat: -1, duration: 900, ease: "Sine.inOut" });
 
     this.stormBank = this.makeStormBank();
+    this.mindLayer = this.add.container(0, 0).setDepth(12);
     this.ready = true;
     if (this.frame) this.render(this.frame);
   }
@@ -285,6 +296,11 @@ export class IslandScene extends Phaser.Scene {
       this.drawRoutes(state);
       this.drawSites(state);
     }
+    const mindKey = frame.mind ? JSON.stringify([frame.mind.name, frame.mind.beliefs.filter((b) => !b.up_to_date)]) : "";
+    if (mindKey !== this.mindKey) {
+      this.mindKey = mindKey;
+      this.drawMind(state, frame.mind ?? null);
+    }
     for (const c of state.characters) if (!this.toons.has(c.id)) this.toons.set(c.id, this.makeToon(c));
     for (const c of state.characters) {
       const t = this.toons.get(c.id)!;
@@ -301,6 +317,71 @@ export class IslandScene extends Phaser.Scene {
       const lh = state.locations.find((l) => l.id === "lighthouse");
       if (lh) this.confetti(lh.x, lh.y - 40);
     }
+  }
+
+  /** Mind View: a thought bubble on every road the character is wrong about, and a ghost wherever it
+   *  wrongly thinks a teammate or an item is. Only facts the player can already see are compared. */
+  private drawMind(state: StateView, mind: MindOverlay | null): void {
+    this.mindLayer.removeAll(true);
+    if (!mind) return;
+    const wrong = mind.beliefs.filter((b) => !b.up_to_date);
+    const loc = new Map(state.locations.map((l) => [l.id, l]));
+    const items: Phaser.GameObjects.GameObject[] = [this.add.rectangle(W / 2, H / 2, W, H, MIND, 0.1)];
+
+    const bubble = (x: number, y: number, label: string) => {
+      const text = this.add.text(0, 0, label, { fontFamily: FONT, resolution: RES, fontSize: "12px", color: "#1d2142", fontStyle: "bold" })
+        .setOrigin(0.5);
+      const w = text.width + 18;
+      const g = this.add.graphics();
+      g.fillStyle(INK).fillRoundedRect(-w / 2, -10, w, 23, 11.5);
+      g.fillStyle(0xf3f0ff).fillRoundedRect(-w / 2, -13, w, 23, 11.5).lineStyle(2.5, MIND).strokeRoundedRect(-w / 2, -13, w, 23, 11.5);
+      g.fillStyle(0xf3f0ff).lineStyle(2, MIND).fillCircle(-4, 18, 4).strokeCircle(-4, 18, 4).fillCircle(-9, 26, 2.5).strokeCircle(-9, 26, 2.5);
+      const c = this.add.container(x, y, [g, text]);
+      this.tweens.add({ targets: c, y: y - 4, yoyo: true, repeat: -1, duration: 1300, ease: "Sine.inOut" });
+      return c;
+    };
+
+    for (const f of wrong.filter((b) => b.kind === "route" && b.route_id)) {
+      const r = state.routes.find((x) => x.id === f.route_id);
+      const a = r && loc.get(r.a);
+      const b = r && loc.get(r.b);
+      if (!r || !a || !b) continue;
+      const mid = pointOnCurve(a, b, ROUTE_BEND[r.id] ?? 0, 0.5);
+      items.push(bubble(mid.x, mid.y - 34, `${mind.name} thinks: ${f.believed}`));
+    }
+
+    // Ghosts: where the character believes teammates and items are (when that is wrong).
+    const perPlace = new Map<string, number>();
+    for (const f of wrong.filter((b) => (b.kind === "teammate" || b.kind === "item") && b.believed_location)) {
+      const at = loc.get(f.believed_location!);
+      if (!at) continue;
+      const n = perPlace.get(at.id) ?? 0;
+      perPlace.set(at.id, n + 1);
+      // Beside the place (above it near the south coast, where the map key and the sea are).
+      const x = at.x + 52 + n * 48;
+      const y = at.y > 500 ? at.y - 20 : at.y + 34;
+      const g = this.add.graphics();
+      if (f.kind === "teammate") {
+        g.fillStyle(MIND, 0.3).fillCircle(0, 0, 19).lineStyle(3, MIND, 0.95).strokeCircle(0, 0, 19);
+        g.fillStyle(0xffffff, 0.9).fillCircle(-6, -3, 3.5).fillCircle(6, -3, 3.5);
+      } else {
+        const d = [{ x: 0, y: -15 }, { x: 13, y: 0 }, { x: 0, y: 15 }, { x: -13, y: 0 }];
+        g.fillStyle(MIND, 0.3).fillPoints(d, true).lineStyle(3, MIND, 0.95).strokePoints(d, true);
+      }
+      const label = this.add.text(0, 29, `${f.subject.split(" ")[0]}?`,
+        { fontFamily: FONT, resolution: RES, fontSize: "13px", color: "#5f3dc4", fontStyle: "bold" })
+        .setOrigin(0.5).setStroke("#ffffff", 4);
+      const ghost = this.add.container(x, y, [g, label]).setAlpha(0.9);
+      this.tweens.add({ targets: ghost, alpha: 0.45, yoyo: true, repeat: -1, duration: 1100, ease: "Sine.inOut" });
+      items.push(ghost);
+    }
+
+    const title = this.add.container(W / 2, 24);
+    this.setPill(title, wrong.some((b) => b.kind !== "teammate")
+      ? `${mind.name}'s picture of the island · ${wrong.filter((b) => b.kind !== "teammate").length} out of date`
+      : `${mind.name}'s picture of the island matches reality`, 0xe5dbff, false);
+    items.push(title);
+    this.mindLayer.add(items);
   }
 
   private drawRoutes(state: StateView): void {

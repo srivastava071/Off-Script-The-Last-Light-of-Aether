@@ -1,5 +1,6 @@
 import type {
-  ActionResult, CharacterId, CreatedRun, EventsView, GameMode, Health, ProposedAction, StateView,
+  ActionResult, CharacterId, CreatedRun, EventsView, GameMode, Health, Journal, ProposedAction, RunAnalytics,
+  RunSummary, StateView,
 } from "../types/api";
 import type { Scenario } from "../types/scenario";
 
@@ -105,4 +106,12 @@ export const api = {
   pause: (s: RunSession, paused: boolean) => request<StateView>(`/runs/${s.runId}/pause`, post({ paused }), s.token),
 
   restart: (s: RunSession) => request<CreatedRun>(`/runs/${s.runId}/restart`, post({}), s.token),
+
+  analytics: (s: RunSession) => request<RunAnalytics>(`/runs/${s.runId}/analytics`, {}, s.token),
+
+  finishedRuns: () => request<RunSummary[]>("/runs?status=finished&limit=100"),
+
+  journal: () => request<Journal>("/journal"),
+
+  resetJournal: () => request<Journal>("/journal/reset", post({})),
 };

@@ -27,7 +27,7 @@ export function EventTimeline({ events, className = "" }: { events: WorldEvent[]
     const keep = (e: WorldEvent) => {
       if (NOISE.has(e.kind)) return false;
       if (filter === "all") return true;
-      if (filter === "adapt") return isAdaptation(e) || e.kind === "llm_deliberation";
+      if (filter === "adapt") return isAdaptation(e) || e.kind === "llm_deliberation" || e.kind === "lesson_applied";
       return eventStyle(e).group === (filter as EventGroup);
     };
     return events.filter(keep).slice(-150).reverse();
@@ -67,6 +67,9 @@ export function EventTimeline({ events, className = "" }: { events: WorldEvent[]
                 {by && <span className="ml-1 text-xs text-muted">· {by}</span>}
                 {e.kind === "plan_changed" && e.data.planner === "llm" && (
                   <span className="ml-1 text-xs text-teal">· chosen with AI</span>
+                )}
+                {e.kind === "plan_changed" && String(e.data.planner ?? "").startsWith("lesson:") && (
+                  <span className="ml-1 text-xs text-amber">· from a past game</span>
                 )}
               </span>
             </li>

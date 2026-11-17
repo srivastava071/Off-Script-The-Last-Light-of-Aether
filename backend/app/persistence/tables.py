@@ -74,3 +74,44 @@ class MemoryRow(Base):
     source: Mapped[str] = mapped_column(String(32))
     importance: Mapped[int] = mapped_column(Integer)
     confidence: Mapped[float] = mapped_column(Float)
+
+
+class LessonRow(Base):
+    """Team journal: a lesson the characters learned in one Watch run and tested in the next.
+
+    ``status`` is "trying" (being tested in the next Watch run), "kept" (it helped) or "rejected".
+    """
+
+    __tablename__ = "lessons"
+    __table_args__ = (UniqueConstraint("character_id", "instead_of", "prefer"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    character_id: Mapped[str] = mapped_column(String(32))
+    instead_of: Mapped[str] = mapped_column(String(64))
+    prefer: Mapped[str] = mapped_column(String(64))
+    text: Mapped[str] = mapped_column(Text)
+    evidence: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), index=True)
+    learned_in_run: Mapped[str] = mapped_column(String(64))
+    baseline_ending: Mapped[str] = mapped_column(String(32))
+    baseline_seconds: Mapped[int] = mapped_column(Integer)
+    tested_in_run: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    tested_ending: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    tested_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    result: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class JournalRunRow(Base):
+    """One finished run as the team journal saw it: the learning curve, and what was learned or tested."""
+
+    __tablename__ = "journal_runs"
+
+    run_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    mode: Mapped[str] = mapped_column(String(16))
+    player_character: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    ending: Mapped[str] = mapped_column(String(32))
+    finished_at: Mapped[int] = mapped_column(Integer)
+    lessons_used: Mapped[list[int]] = mapped_column(JSON)
+    note: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

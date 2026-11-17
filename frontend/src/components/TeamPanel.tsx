@@ -1,16 +1,17 @@
-import { Bot, Footprints, Gem, Radio, User, Users } from "lucide-react";
+import { Bot, Brain, Footprints, Gem, Radio, User, Users } from "lucide-react";
 
 import type { CharacterView, ObjectView } from "../types/api";
 import { ToonAvatar } from "./ToonAvatar";
 import { Badge, Panel, ProgressBar } from "./ui";
 
-export function TeamPanel({ characters, objects, placeName, now, focus, onFocus }: {
+export function TeamPanel({ characters, objects, placeName, now, focus, onFocus, onOpenMind }: {
   characters: CharacterView[];
   objects: ObjectView[];
   placeName: (id: string) => string;
   now: number;
   focus: string | null;
   onFocus: (id: string) => void;
+  onOpenMind?: (id: string) => void;
 }) {
   const itemName = (id: string) => objects.find((o) => o.id === id)?.name ?? id;
   return (
@@ -22,9 +23,9 @@ export function TeamPanel({ characters, objects, placeName, now, focus, onFocus 
             : c.location_id ? placeName(c.location_id) : "—";
           const span = c.travel ? [c.travel.depart_at, c.travel.arrive_at] : c.activity ? [c.activity.started_at, c.activity.completes_at] : null;
           return (
-            <li key={c.id}>
+            <li key={c.id} className={`overflow-hidden rounded-lg border transition ${focus === c.id ? "border-amber/70 bg-amber/5" : "border-line"}`}>
               <button onClick={() => onFocus(c.id)} aria-pressed={focus === c.id}
-                className={`w-full rounded-lg border p-2.5 text-left transition ${focus === c.id ? "border-amber/70 bg-amber/5" : "border-line hover:border-line/80 hover:bg-panel-2/50"}`}>
+                className="w-full p-2.5 text-left transition hover:bg-panel-2/50">
                 <div className="flex items-center gap-2">
                   <ToonAvatar id={c.id} color={c.color} size={32} />
                   <span className="font-semibold">{c.name}</span>
@@ -60,6 +61,17 @@ export function TeamPanel({ characters, objects, placeName, now, focus, onFocus 
                 )}
                 {c.adaptations > 0 && <p className="mt-1 text-xs text-amber">Adapted {c.adaptations}× to changes</p>}
               </button>
+              {onOpenMind && (
+                <button type="button" onClick={() => onOpenMind(c.id)}
+                  className="flex w-full items-center gap-1.5 border-t border-line bg-[#f3f0ff] px-2.5 py-1.5 text-xs font-bold text-[#5f3dc4] hover:bg-[#e5dbff]">
+                  <Brain size={13} /> Look inside {c.name}'s head
+                  {c.mind.outdated > 0 && (
+                    <span className="ml-auto rounded-full bg-[#7048e8] px-1.5 text-[10px] text-white">
+                      {c.mind.outdated} out of date
+                    </span>
+                  )}
+                </button>
+              )}
             </li>
           );
         })}

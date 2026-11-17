@@ -119,6 +119,106 @@ export interface CharacterView {
   orders: string[]; // player instructions still to carry out
   replans: number;
   adaptations: number;
+  mind: MindView;
+}
+
+/** Mind View: one thing a character believes, next to what is actually true. */
+export interface BeliefFact {
+  kind: "route" | "item" | "teammate" | "temple" | "lighthouse" | "flood";
+  subject: string;
+  believed: string;
+  actual: string;
+  up_to_date: boolean;
+  as_of: number | null;
+  route_id: string | null;
+  believed_location: string | null;
+  actual_location: string | null;
+}
+
+export interface MindMemory {
+  time: number;
+  text: string;
+  source: string; // saw | did | told | signal | briefing
+  from_id: string | null;
+  importance: number;
+}
+
+export interface Thinking {
+  since: number;
+  chosen: string;
+  chosen_by: "rules" | "ai" | "lesson" | "player";
+  trigger: string | null;
+  thought: string | null;
+  options: { strategy: string; summary: string; chosen: boolean }[];
+}
+
+export interface MindView {
+  thinking: Thinking | null;
+  beliefs: BeliefFact[];
+  outdated: number;
+  memories: MindMemory[];
+  lessons: { id: number; text: string; status: "kept" | "trying"; used: boolean }[];
+}
+
+/** Gameplay graphs for one run, built from its recorded events. */
+export interface RunAnalytics {
+  duration: number;
+  deadline: number | null;
+  beats_total: number;
+  progress: { time: number; title: string; reached: number }[];
+  timelines: {
+    id: CharacterId; name: string; color: string;
+    segments: { start: number; end: number; kind: "travel" | "work"; label: string }[];
+    travel: number; work: number; waiting: number;
+  }[];
+  decisions: {
+    id: CharacterId; name: string; color: string;
+    plan_changes: number; adaptations: number; ai_choices: number; lessons_used: number; failed_actions: number;
+  }[];
+}
+
+export interface RunSummary {
+  id: string;
+  mode: GameMode;
+  player_character: string | null;
+  status: RunStatus;
+  ending: EndingId | null;
+  sim_time: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Team journal: lessons carried from one game to the next. */
+export interface Lesson {
+  id: number;
+  character_id: CharacterId;
+  character: string;
+  text: string;
+  evidence: string;
+  status: "trying" | "kept" | "rejected";
+  result: string | null;
+  learned_in_run: string;
+  tested_in_run: string | null;
+  baseline_seconds: number;
+  tested_seconds: number | null;
+  created_at: string;
+}
+
+export interface JournalRun {
+  run_id: string;
+  mode: GameMode;
+  player_character: string | null;
+  ending: EndingId;
+  ending_title: string;
+  finished_at: number;
+  lessons_used: number[];
+  note: string;
+  created_at: string;
+}
+
+export interface Journal {
+  lessons: Lesson[];
+  runs: JournalRun[];
 }
 
 export interface ObjectView {

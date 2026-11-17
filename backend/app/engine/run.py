@@ -24,6 +24,7 @@ from app.engine.simulation import run_tick
 from app.models.actions import ActionResult, ProposedAction
 from app.models.enums import ActionType, EventKind, GameMode, RunStatus
 from app.models.events import WorldEvent
+from app.models.mind import ActiveLesson
 from app.models.world import WorldState
 
 PlannerFactory = Callable[[str], Planner]
@@ -57,7 +58,9 @@ class Run:
         tick_seconds: int = 5,
         deadline_seconds: int = 600,
         planner_factory: PlannerFactory | None = None,
+        lessons: dict[str, list[ActiveLesson]] | None = None,
     ) -> "Run":
+        """``lessons``: from the team journal, per character; the player's own character never gets any."""
         world = build_initial_world(
             run_id or uuid.uuid4().hex, mode, tick_seconds=tick_seconds,
             deadline_seconds=deadline_seconds if mode is GameMode.GAME else None,
@@ -68,6 +71,9 @@ class Run:
         elif player_character is not None:
             raise RunError("Default Mode has no player character.")
         world.story.player_character = player_character
+        for cid, carried in (lessons or {}).items():
+            if cid in world.minds and cid != player_character:
+                world.minds[cid].lessons = [le.model_copy() for le in carried]
         return cls(world, planner_factory)
 
     # --- lifecycle --------------------------------------------------------------------------------

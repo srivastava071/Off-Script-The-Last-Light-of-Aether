@@ -1,6 +1,9 @@
 import { BookOpen, CheckCircle2, CloudLightning, Compass, Cpu, Home, Lightbulb, Map, RotateCcw, ScrollText, Sparkles, Swords, XCircle } from "lucide-react";
 
 import { StorybookPages } from "../components/Storybook";
+import { RunGraphsPanel } from "../components/GameplayGraphs";
+import { LessonList, useJournal } from "../components/TeamJournal";
+import type { RunSession } from "../services/api";
 import { Badge, Button, Panel } from "../components/ui";
 import { formatClock } from "../game/geometry";
 import type { EndingId, StateView } from "../types/api";
@@ -21,8 +24,23 @@ const STAT_LABELS: Record<string, string> = {
   traps_sprung: "Traps sprung",
 };
 
-export function EndingScreen({ state, onRestart, onMenu, onOtherMode }: {
+/** What the team journal made of this run: a lesson tested, a lesson learned for next time. */
+function JournalSummary({ runId }: { runId: string }) {
+  const { journal } = useJournal(runId);
+  const entry = journal?.runs.find((r) => r.run_id === runId);
+  const related = journal?.lessons.filter((l) => l.learned_in_run === runId || l.tested_in_run === runId) ?? [];
+  if (!entry || (!entry.note && related.length === 0)) return null;
+  return (
+    <Panel title="What the team learned" icon={<BookOpen size={16} />} className="mt-4">
+      {entry.note && <p className="mb-3 text-sm">{entry.note}</p>}
+      <LessonList lessons={related} />
+    </Panel>
+  );
+}
+
+export function EndingScreen({ state, session, onRestart, onMenu, onOtherMode }: {
   state: StateView;
+  session?: RunSession;
   onRestart: () => void;
   onMenu: () => void;
   onOtherMode: () => void;
@@ -71,6 +89,10 @@ export function EndingScreen({ state, onRestart, onMenu, onOtherMode }: {
           </div>
         ))}
       </div>
+
+      <JournalSummary runId={state.run.id} />
+
+      {session && <div className="mt-4"><RunGraphsPanel session={session} wide /></div>}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Panel title="Objectives" icon={<CheckCircle2 size={16} />}>

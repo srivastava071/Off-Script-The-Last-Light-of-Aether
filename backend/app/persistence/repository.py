@@ -2,14 +2,14 @@
 
 from pathlib import Path
 
-from sqlalchemy import create_engine, event, select
+from sqlalchemy import create_engine, delete, event, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.models.world import WorldState
-from app.persistence.tables import Base, EventRow, MemoryRow, RunRow, SnapshotRow
+from app.persistence.tables import Base, EventRow, JournalRunRow, LessonRow, MemoryRow, RunRow, SnapshotRow
 
 IMPORTANT = 4
 
@@ -116,3 +116,50 @@ class RunRepository:
     def snapshot_count(self, run_id: str) -> int:
         with self.sessions() as s:
             return len(list(s.scalars(select(SnapshotRow.id).where(SnapshotRow.run_id == run_id))))
+
+    # --- team journal (learning across runs) ------------------------------------------------------------
+
+    def lessons(self, statuses: tuple[str, ...] | None = None) -> list[LessonRow]:
+        with self.sessions() as s:
+            q = select(LessonRow).order_by(LessonRow.id)
+            if statuses:
+                q = q.where(LessonRow.status.in_(statuses))
+            return list(s.scalars(q))
+
+    def lesson(self, lesson_id: int) -> LessonRow | None:
+        with self.sessions() as s:
+            return s.get(LessonRow, lesson_id)
+
+    def add_lesson(self, **fields: object) -> LessonRow:
+        with self.sessions.begin() as s:
+            row = LessonRow(**fields)
+            s.add(row)
+            s.flush()
+            return row
+
+    def update_lesson(self, lesson_id: int, **fields: object) -> None:
+        with self.sessions.begin() as s:
+            row = s.get(LessonRow, lesson_id)
+            if row is not None:
+                for key, value in fields.items():
+                    setattr(row, key, value)
+
+    def journal_has(self, run_id: str) -> bool:
+        with self.sessions() as s:
+            return s.get(JournalRunRow, run_id) is not None
+
+    def add_journal_run(self, **fields: object) -> None:
+        with self.sessions.begin() as s:
+            s.add(JournalRunRow(**fields))
+
+    def journal_runs(self, mode: str | None = None, limit: int = 50) -> list[JournalRunRow]:
+        with self.sessions() as s:
+            q = select(JournalRunRow).order_by(JournalRunRow.created_at.desc()).limit(limit)
+            if mode:
+                q = q.where(JournalRunRow.mode == mode)
+            return list(reversed(list(s.scalars(q))))
+
+    def reset_journal(self) -> None:
+        with self.sessions.begin() as s:
+            s.execute(delete(LessonRow))
+            s.execute(delete(JournalRunRow))

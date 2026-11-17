@@ -8,6 +8,7 @@ Rule rejections (e.g. "the bridge is broken") are normal game outcomes: they ret
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 
 from app.core.config import Settings, get_settings
+from app.engine.analytics import RunAnalytics, run_analytics
 from app.models.actions import ActionResult, ProposedAction
 from app.models.enums import ActionType
 from app.schemas.requests import (
@@ -157,6 +158,13 @@ async def events(after: int = Query(0, ge=0), limit: int = Query(200, ge=1, le=1
 async def characters(m: ManagedRun = Depends(managed_run)) -> list[CharacterView]:
     async with m.lock:
         return character_views(m.world)
+
+
+@router.get("/{run_id}/analytics", response_model=RunAnalytics)
+async def analytics(m: ManagedRun = Depends(managed_run)) -> RunAnalytics:
+    """Gameplay graphs: each character's timeline, mission progress and decisions (so far, or for the whole run)."""
+    async with m.lock:
+        return run_analytics(m.world)
 
 
 @router.post("/{run_id}/restart", response_model=CreatedRun, status_code=status.HTTP_201_CREATED)

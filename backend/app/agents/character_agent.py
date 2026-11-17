@@ -14,10 +14,12 @@ from app.engine.rules import check_action, perform
 from app.models.actions import ProposedAction
 from app.models.enums import ActionType, EventKind
 from app.models.events import WorldEvent
-from app.models.mind import Plan
+from app.models.mind import DecisionTrace, OptionTrace, Plan, WaitEpisode
 from app.models.world import WorldState
 
 SIGNIFICANT = 4
+MAX_WAIT_LOG = 30
+IDLE = ("waiting", "blocked")
 
 # Outcomes of a character's own work. If one of these just happened, a strategy change is
 # ordinary progress ("bridge done, now cross it"), not an adaptation.
@@ -89,6 +91,58 @@ class CharacterAgent:
             trigger=trigger, adaptation=adaptation, planner=decision.source, status=decision.status,
         )]
 
+    def _record_thinking(
+        self, world: WorldState, decision: Decision, options: list[Decision], trigger: str | None
+    ) -> list[WorldEvent]:
+        """Keep the decision trace (Mind View) and the waiting log (team journal) up to date."""
+        cid = self.character_id
+        mind = world.minds[cid]
+        now = world.clock.now
+        events: list[WorldEvent] = []
+        thought = None
+        if decision.strategy == "follow_orders":
+            by = "player"
+        elif decision.source == "llm":
+            by, thought = "ai", mind.preference_thought
+        elif decision.source.startswith("lesson:"):
+            by = "lesson"
+            lesson = next((le for le in mind.lessons if f"lesson:{le.id}" == decision.source), None)
+            if lesson is not None:
+                thought = lesson.text
+                if lesson.id not in mind.lessons_used:
+                    mind.lessons_used.append(lesson.id)
+                    events.append(world.record(
+                        EventKind.LESSON_APPLIED, f"{world.name(cid)} remembers an earlier game: {lesson.text}",
+                        actor=cid, location_id=world.characters[cid].location_id, lesson_id=lesson.id,
+                        instead_of=lesson.instead_of, strategy=lesson.prefer, status=lesson.status,
+                    ))
+        else:
+            by = "rules"
+        prev = mind.trace
+        same = prev is not None and prev.chosen == decision.strategy
+        mind.trace = DecisionTrace(
+            since=prev.since if same and prev else now,
+            options=[OptionTrace(strategy=d.strategy, summary=d.summary, status=d.status) for d in options],
+            chosen=decision.strategy, chosen_by=by,
+            trigger=trigger if trigger is not None else (prev.trigger if same and prev else None),
+            thought=thought,
+        )
+
+        open_episode = mind.wait_log[-1] if mind.wait_log and mind.wait_log[-1].ended_at is None else None
+        idle = decision.status in IDLE and by != "player"
+        if open_episode is not None and (not idle or open_episode.strategy != decision.strategy):
+            open_episode.ended_at = now
+            open_episode = None
+        if idle and open_episode is None:
+            mind.wait_log.append(WaitEpisode(
+                strategy=decision.strategy, summary=decision.summary,
+                location_id=world.characters[cid].location_id, started_at=now,
+                alternatives=[OptionTrace(strategy=d.strategy, summary=d.summary, status=d.status)
+                              for d in options if d.strategy != decision.strategy],
+            ))
+            del mind.wait_log[:-MAX_WAIT_LOG]
+        return events
+
     def _maintain_requests(self, world: WorldState) -> list[WorldEvent]:
         """Drop promises that expired, were fulfilled, or became impossible - and say so."""
         cid = self.character_id
@@ -129,11 +183,18 @@ class CharacterAgent:
             boss = world.name(order.from_id)
             decision = Decision(strategy="follow_orders", goal=f"Do what {boss} asked", action=order_action,
                                 summary=f"Following {boss}'s instruction: {order.summary}.")
+            options = [decision]
         else:
-            decision = self.planner.decide(world, cid, trigger)
+            choose = getattr(self.planner, "choose", None)
+            if choose is not None:
+                decision, options = choose(world, cid, trigger)
+            else:
+                decision = self.planner.decide(world, cid, trigger)
+                options = [decision]
         mind = world.minds[cid]
         if mind.preferred_strategy and decision.source != "llm":
-            mind.preferred_strategy = mind.preference_expires_at = None  # no longer a valid option
+            mind.preferred_strategy = mind.preference_expires_at = mind.preference_thought = None  # no longer valid
+        events += self._record_thinking(world, decision, options, trigger)
         events += self._update_plan(world, decision, trigger, progressed)
 
         action = decision.action or ProposedAction(actor=cid, type=ActionType.WAIT, seconds=10)

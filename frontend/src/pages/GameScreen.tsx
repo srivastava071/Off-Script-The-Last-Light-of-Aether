@@ -1,12 +1,14 @@
-import { BookOpen, CircleHelp, Flag, Loader2, Package, ScrollText, User, Users } from "lucide-react";
+import { BarChart3, BookOpen, CircleHelp, Flag, Loader2, Package, ScrollText, User, Users } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { ActionPanel } from "../components/ActionPanel";
 import { CommandBar } from "../components/CommandBar";
 import { DialoguePanel } from "../components/DialoguePanel";
 import { EventTimeline } from "../components/EventTimeline";
+import { RunGraphsPanel } from "../components/GameplayGraphs";
 import { GuideCompact } from "../components/HowToPlay";
 import { MapView } from "../components/MapView";
+import { MindPanel } from "../components/MindPanel";
 import { MissionBar } from "../components/MissionBar";
 import { ObjectivePanel } from "../components/ObjectivePanel";
 import { Storybook } from "../components/Storybook";
@@ -23,7 +25,7 @@ import type { ActionResult, Health, StateView } from "../types/api";
 import { prettyAbility } from "../types/scenario";
 import { EndingScreen } from "./EndingScreen";
 
-type Tab = "you" | "team" | "story" | "log" | "guide";
+type Tab = "you" | "team" | "story" | "log" | "graphs" | "guide";
 
 function useTicker(ms: number): number {
   const [now, setNow] = useState(Date.now());
@@ -51,6 +53,7 @@ export function GameScreen({ session, health, onRestart, onMenu, onOtherMode, on
   const [lastSay, setLastSay] = useState<ActionResult | null>(null);
   const [lastTwist, setLastTwist] = useState<ActionResult | null>(null);
   const [tab, setTab] = useState<Tab | null>(null);
+  const [mindOf, setMindOf] = useState<string | null>(null);
   const [seenPages, setSeenPages] = useState(0);
   const [voices, setVoices] = useState(() => {
     try {
@@ -104,7 +107,7 @@ export function GameScreen({ session, health, onRestart, onMenu, onOtherMode, on
   }
 
   if (showEnding && finished) {
-    return <EndingScreen state={state} onRestart={onRestart} onMenu={onMenu} onOtherMode={() => onOtherMode(state)} />;
+    return <EndingScreen state={state} session={session} onRestart={onRestart} onMenu={onMenu} onOtherMode={() => onOtherMode(state)} />;
   }
 
   const running = state.run.status === "running";
@@ -112,6 +115,18 @@ export function GameScreen({ session, health, onRestart, onMenu, onOtherMode, on
   const me = state.characters.find((c) => c.id === state.run.player_character) ?? null;
   const others = me && !me.travel ? state.characters.filter((c) => c.id !== me.id && !c.travel && c.location_id === me.location_id) : [];
   const objName = (id: string) => state.objects.find((o) => o.id === id)?.name ?? id;
+
+  const mindCharacter = active === "team" && mindOf ? state.characters.find((c) => c.id === mindOf) ?? null : null;
+  const mindOverlay = mindCharacter ? { name: mindCharacter.name, beliefs: mindCharacter.mind.beliefs } : null;
+  const openMind = (id: string) => {
+    setMindOf(id);
+    setFocus(id);
+    setTab("team");
+  };
+  const focusOnMap = (id: string) => {
+    setFocus(id);
+    if (mindCharacter) setMindOf(id); // with a mind open, clicking a character on the map looks inside theirs
+  };
 
   const act = async (action: PlayerAction) => setLastResult(await run.act(action));
   const command = async (text: string) => setLastCommand(await run.command(text));
@@ -124,6 +139,7 @@ export function GameScreen({ session, health, onRestart, onMenu, onOtherMode, on
     { id: "team", label: "Team", icon: <Users size={14} /> },
     { id: "story", label: "Story", icon: <BookOpen size={14} />, dot: pages > seenPages && active !== "story" },
     { id: "log", label: "Log", icon: <ScrollText size={14} /> },
+    { id: "graphs", label: "Graphs", icon: <BarChart3 size={14} /> },
     { id: "guide", label: "Guide", icon: <CircleHelp size={14} /> },
   ];
 
@@ -153,7 +169,8 @@ export function GameScreen({ session, health, onRestart, onMenu, onOtherMode, on
 
         {/* The map fills the column; the radio sits right under it. */}
         <div className="flex w-full min-w-0 flex-col gap-3 lg:min-h-0">
-          <MapView className="lg:min-h-0 lg:flex-1" state={state} receivedAt={run.receivedAt} events={run.events} focus={focus} onFocus={setFocus} />
+          <MapView className="lg:min-h-0 lg:flex-1" state={state} receivedAt={run.receivedAt} events={run.events} focus={focus}
+            onFocus={focusOnMap} mind={mindOverlay} />
           {me && running && (
             <CommandBar disabled={false} pending={run.pending} lastResult={lastCommand} sayResult={lastSay}
               twistResult={lastTwist} twists={state.story.twists} now={simNow} voices={voices} onVoices={setVoicesSaved}
@@ -206,9 +223,14 @@ export function GameScreen({ session, health, onRestart, onMenu, onOtherMode, on
                   )}
                 </div>
               )}
-              {active === "team" && (
+              {active === "team" && mindCharacter && (
+                <MindPanel character={mindCharacter} characters={state.characters} now={simNow}
+                  nameOf={(id) => state.characters.find((c) => c.id === id)?.name ?? id}
+                  onPick={openMind} onBack={() => setMindOf(null)} />
+              )}
+              {active === "team" && !mindCharacter && (
                 <TeamPanel characters={state.characters} objects={state.objects} placeName={placeName} now={simNow}
-                  focus={focus} onFocus={setFocus} />
+                  focus={focus} onFocus={setFocus} onOpenMind={openMind} />
               )}
               {active === "story" && (
                 <div className="flex h-full flex-col gap-4">
@@ -217,6 +239,10 @@ export function GameScreen({ session, health, onRestart, onMenu, onOtherMode, on
                 </div>
               )}
               {active === "log" && <EventTimeline events={run.events} className="h-full" />}
+              {active === "graphs" && (
+                // Live: re-fetched every 15 s of game time while this tab is open.
+                <RunGraphsPanel session={session} refresh={Math.floor(state.clock.now / 15)} bare />
+              )}
               {active === "guide" && <GuideCompact game={!!me} />}
             </PlainPanels.Provider>
           </div>

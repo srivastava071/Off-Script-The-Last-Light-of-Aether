@@ -2,18 +2,19 @@ import { Construction, Lock, Maximize2, Minimize2, Smartphone, TriangleAlert } f
 import { useEffect, useRef, useState } from "react";
 
 import { bubbleFor } from "../game/bubbles";
-import { IslandMap } from "../game/IslandScene";
+import { IslandMap, type MindOverlay } from "../game/IslandScene";
 import type { StateView, WorldEvent } from "../types/api";
 import { PULSE } from "./eventStyle";
 
 /** Hosts the Phaser island. It only renders what the backend state says. */
-export function MapView({ state, receivedAt, events, focus, onFocus, className = "" }: {
+export function MapView({ state, receivedAt, events, focus, onFocus, mind = null, className = "" }: {
   className?: string;
   state: StateView;
   receivedAt: number;
   events: WorldEvent[];
   focus: string | null;
   onFocus: (id: string) => void;
+  mind?: MindOverlay | null;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const map = useRef<IslandMap | null>(null);
@@ -47,8 +48,8 @@ export function MapView({ state, receivedAt, events, focus, onFocus, className =
   }, []);
 
   useEffect(() => {
-    map.current?.setFrame({ state, receivedAt, focus });
-  }, [state, receivedAt, focus]);
+    map.current?.setFrame({ state, receivedAt, focus, mind });
+  }, [state, receivedAt, focus, mind]);
 
   useEffect(() => {
     // Pulse the map where important things just happened (only events newer than the last pulse).

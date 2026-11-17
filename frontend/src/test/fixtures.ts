@@ -4,7 +4,8 @@ export function character(over: Partial<CharacterView> = {}): CharacterView {
   return {
     id: "aria", name: "Aria", title: "The Explorer", color: "#f2a541", personality: "", primary_goal: "",
     abilities: ["climb"], restrictions: [], autonomous: false, location_id: "harbour", travel: null, activity: null,
-    inventory: [], plan: null, trust: {}, orders: [], replans: 0, adaptations: 0, ...over,
+    inventory: [], plan: null, trust: {}, orders: [], replans: 0, adaptations: 0,
+    mind: { thinking: null, beliefs: [], outdated: 0, memories: [], lessons: [] }, ...over,
   };
 }
 
