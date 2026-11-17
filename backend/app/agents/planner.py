@@ -415,7 +415,9 @@ class FallbackPlanner:
     """Deterministic, rule-based planner over beliefs. Never calls a model.
 
     If the character's mind holds a still-valid strategy preference (set from an LLM
-    deliberation), the matching option is chosen instead of the first one.
+    deliberation), the matching option is chosen instead of the first one. Otherwise a lesson
+    from an earlier game may swap the first option for another valid one: "where I would
+    <instead_of>, <prefer> instead". Either way the choice is one of the rules' own options.
     """
 
     name = "fallback"
@@ -435,11 +437,19 @@ class FallbackPlanner:
         return out
 
     def decide(self, world: WorldState, character_id: str, trigger: str | None) -> Decision:
+        return self.choose(world, character_id, trigger)[0]
+
+    def choose(self, world: WorldState, character_id: str, trigger: str | None) -> tuple[Decision, list[Decision]]:
+        """The decision plus every option it was chosen from (shown in the Mind View)."""
         options = self.options(world, character_id)
         mind = world.minds[character_id]
         preferred = mind.preferred_strategy
         if preferred and (mind.preference_expires_at is None or world.clock.now < mind.preference_expires_at):
             for d in options:
                 if d.strategy == preferred:
-                    return d.model_copy(update={"source": "llm"})
-        return options[0]
+                    return d.model_copy(update={"source": "llm"}), options
+        by_strategy = {d.strategy: d for d in options}
+        for lesson in mind.lessons:
+            if lesson.instead_of == options[0].strategy and lesson.prefer in by_strategy:
+                return by_strategy[lesson.prefer].model_copy(update={"source": f"lesson:{lesson.id}"}), options
+        return options[0], options

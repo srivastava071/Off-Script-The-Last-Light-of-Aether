@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Off Script: New Features Report</title>
+<style>
+  @page { size: A4; margin: 16mm 16mm 16mm 16mm; }
+  :root { --ink:#1d2142; --mut:#5d6075; --line:#d9d8e3; --acc:#1f4e79; --accbg:#eaf1f8; --mind:#5f3dc4; --mindbg:#f3f0ff; --warm:#fbf6ea; --warmline:#e6d6a8; --ok:#2f9e44; --okbg:#ebfbee; --bad:#c92a2a; }
+  * { box-sizing: border-box; }
+  body { margin:0; color:var(--ink); background:#fff; font: 10.5pt/1.5 "Segoe UI", Calibri, Arial, sans-serif; }
+  h1 { font-size: 24pt; margin: 0 0 4pt; color: var(--acc); line-height:1.2; }
+  h2 { font-size: 15pt; margin: 0 0 8pt; color: var(--acc); border-bottom: 2px solid var(--acc); padding-bottom: 3pt; break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 11pt 0 4pt; break-after: avoid; }
+  p { margin: 0 0 6pt; }
+  ul, ol { margin: 0 0 6pt; padding-left: 16pt; }
+  li { margin-bottom: 2pt; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  .mut { color: var(--mut); } .small { font-size: 9pt; }
+  .box { border: 1px solid var(--line); border-radius: 6px; padding: 8pt 10pt; margin: 8pt 0; break-inside: avoid; }
+  .key { background: var(--accbg); border-color: #bcd0e4; }
+  .mind { background: var(--mindbg); border-color: #c5b8f5; }
+  .say { background: var(--warm); border-color: var(--warmline); }
+  .good { background: var(--okbg); border-color: #b2dfbd; }
+  .box h3 { margin-top: 0; }
+  table { width:100%; border-collapse: collapse; margin: 6pt 0 8pt; font-size: 9.6pt; break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 4pt 6pt; text-align: left; vertical-align: top; }
+  th { background: #f2f1f7; }
+  .cover { display:flex; flex-direction:column; justify-content:center; min-height: 255mm; }
+  .tag { font-size:9pt; letter-spacing:.08em; text-transform:uppercase; color:var(--acc); font-weight:600; margin-bottom:10pt; }
+  .sub { font-size: 13pt; color: var(--mut); margin-bottom: 22pt; }
+  .meta td { border:none; padding: 3pt 0; font-size: 10.5pt; }
+  .meta td:first-child { color: var(--mut); width: 40mm; }
+  .flow { display:flex; align-items:stretch; gap:4pt; margin:8pt 0; break-inside: avoid; }
+  .flow div { flex:1; border:1px solid #c5b8f5; background: var(--mindbg); border-radius:6px; padding:5pt 6pt; font-size:9pt; text-align:center; }
+  .flow b { display:block; color: var(--mind); }
+  .flow .arr { flex:0 0 auto; border:none; background:none; align-self:center; padding:0; color:var(--mut); font-size:13pt; }
+  img.shot { display:block; width:100%; border:1px solid var(--line); border-radius:4px; margin: 4pt 0 2pt; }
+  .cap { font-size: 8.8pt; color: var(--mut); margin-bottom: 8pt; }
+  .member { border:1px solid var(--line); border-radius:6px; padding: 7pt 10pt; margin: 0 0 8pt; break-inside: avoid; }
+  .member h3 { margin: 0 0 3pt; }
+  .member .role { color: var(--mut); font-size: 9pt; margin-bottom: 4pt; }
+  .files { font-family: Consolas, monospace; font-size: 8.4pt; color: var(--mut); }
+  .badge { display:inline-block; padding: 0 6pt; border-radius: 9pt; font-size: 8.5pt; font-weight: 600; }
+  .b-a { background: var(--mindbg); color: var(--mind); border: 1px solid #c5b8f5; }
+  .b-b { background: #fff4e6; color: #b35c00; border: 1px solid #f5c98b; }
+  .qa .q { font-weight: 600; margin: 6pt 0 1pt; }
+  .num { font-weight: 700; color: var(--acc); }
+</style>
+</head>
+<body>
+
+<section class="page cover">
+  <div class="tag">Capstone Project · CSE339 · SIH26195</div>
+  <h1>Progress Report: Two New Features</h1>
+  <div class="sub">Off Script: The Last Light of Aether</div>
+  <table class="meta">
+    <tr><td>Feature 1</td><td><b>Mind View</b>: see inside an AI character's head</td></tr>
+    <tr><td>Feature 2</td><td><b>Team Journal</b>: characters that learn across games</td></tr>
+    <tr><td>Team</td><td>Devansh Patel · Devesh Singh · Anurag Patel · Siddhank Kashyap · Himanshu Srivastava · Aniket Mondal</td></tr>
+    <tr><td>Date</td><td>18 November 2026</td></tr>
+  </table>
+  <div class="box key" style="margin-top:22pt">
+    <b>In one line:</b> our AI characters already plan and adapt on their own. Now you can <b>see why</b> they do
+    what they do (Mind View), and they <b>get better with experience</b> by learning lessons from earlier games
+    and keeping only the ones that really help (Team Journal).
+  </div>
+</section>
+
+<section class="page">
+  <h2>1. Summary: what is new</h2>
+  <table>
+    <tr><th style="width:18%"></th><th>Feature 1: Mind View</th><th>Feature 2: Team Journal</th></tr>
+    <tr><td><b>What it does</b></td><td>Shows each character's decision (options, who chose, why), what it believes compared with reality, and its memories. Purple bubbles and "ghosts" on the map show where its knowledge is out of date.</td><td>After each Watch run, a character notices where it waited a long time and writes a lesson. The next run tests the lesson. It is kept only if the team finishes better; otherwise it is dropped.</td></tr>
+    <tr><td><b>Why it is unique</b></td><td>Most games hide AI decisions. We show that our characters act on their <i>own partial knowledge</i>, not on the true game state.</td><td>Most game characters forget everything when the game restarts. Ours remember, improve, and also reject bad ideas.</td></tr>
+    <tr><td><b>Research link</b></td><td>ReAct (visible reasoning), LLM-Modulo (options → choice → check).</td><td>Generative Agents (reflection), Reflexion (learning from mistakes in words).</td></tr>
+    <tr><td><b>Safety</b></td><td>Only compares facts the player can already see, so nothing secret is revealed.</td><td>A lesson can only choose an option the rules already allow, so learning never breaks a game rule.</td></tr>
+  </table>
+
+  <h3>Real results from the game</h3>
+  <table>
+    <tr><th>Watch run</th><th>Beacon lit at</th><th>What the Team Journal did</th></tr>
+    <tr><td>Run 1</td><td>330 s</td><td>Aria waited <b>110 s</b> at the temple. She writes a lesson: "Next time: puzzle out the symbols myself."</td></tr>
+    <tr><td>Run 2</td><td><b>325 s</b></td><td>Lesson tested: 5 s faster, so it is <span style="color:var(--ok);font-weight:600">kept</span>. She writes a new lesson: "Regroup at the Lighthouse instead of waiting."</td></tr>
+    <tr><td>Run 3</td><td>360 s</td><td>New lesson tested: 35 s slower, so it is <span style="color:var(--bad);font-weight:600">dropped</span>.</td></tr>
+    <tr><td>Run 4+</td><td>325 s</td><td>The team keeps what worked. No long waits left to learn from.</td></tr>
+  </table>
+  <p class="small mut">The improvement is small (5 s) because the starting plan was already well tuned. The important part is the method: the team tries an idea, measures it, keeps what helps and rejects what hurts.</p>
+
+  <h3>Tests</h3>
+  <table>
+    <tr><th>Suite</th><th>Before</th><th>Now</th><th>New tests</th></tr>
+    <tr><td>Backend (pytest)</td><td>201</td><td><b>217 pass</b></td><td>8 Mind View + 8 learning</td></tr>
+    <tr><td>Frontend (vitest)</td><td>30</td><td><b>35 pass</b></td><td>5 (Mind panel, team button, lesson labels)</td></tr>
+    <tr><td>Live check in the browser</td><td colspan="3">Watch run 1 → lesson written → Watch run 2 uses it (pop-up "Aria remembers an earlier game") → kept. Game Mode uses kept lessons only. No console or server errors.</td></tr>
+  </table>
+</section>
+
+<section class="page">
+  <h2>2. Feature 1: Mind View</h2>
+  <p><b>The idea:</b> in our game every character acts only on what it <i>knows</i>, not on the real state of the island. Until now this was invisible. The Mind View makes it visible. Open the <b>Team</b> tab and click <b>"Look inside Aria's head"</b>.</p>
+  <img class="shot" src="images/mind_view.jpg" alt="Mind View of Aria">
+  <div class="cap">Aria's Mind View. Right: why she chose her plan (a lesson from a past game), the options she considered, and what she believes vs reality. Map: "Aria thinks: broken" on the bridge that is already fixed, and ghosts at the harbour where she wrongly thinks the gear, the timber, Kabir and Meera still are.</div>
+
+  <h3>What it shows</h3>
+  <ol>
+    <li><b>Why this plan?</b> All options the rules offered, the chosen one highlighted, and <b>who chose it</b>: the rules, the AI (with its one-line reason), a lesson from a past game, or the player's radio order. Also the news that caused the choice.</li>
+    <li><b>Believes vs reality.</b> Every road, item, the temple lock, the lighthouse and the flood: what the character thinks, what is really true, and how long ago it learned it. Out-of-date facts are highlighted.</li>
+    <li><b>Recent memories.</b> Newest first, with where each came from: saw it, did it, told by a teammate, or heard a signal.</li>
+  </ol>
+  <div class="flow">
+    <div><b>1. Decide</b>Rules list the valid options</div><div class="arr">→</div>
+    <div><b>2. Choose</b>Rules, AI, lesson or player picks one</div><div class="arr">→</div>
+    <div><b>3. Record</b>The choice and options are saved in the character's mind</div><div class="arr">→</div>
+    <div><b>4. Compare</b>Beliefs are checked against the real world</div><div class="arr">→</div>
+    <div><b>5. Show</b>Side panel + purple map layer</div>
+  </div>
+  <p class="small mut">While building this we also found and fixed a small existing bug: after Kabir used the timber, he still believed he was carrying it. Characters now update their belief about items that leave their hands.</p>
+</section>
+
+<section class="page">
+  <h2>3. Feature 2: Team Journal (learning across games)</h2>
+  <p><b>The idea:</b> after every Watch run, each character looks back: "Where did I stand waiting for a long time, when my rules offered something else I could do?" That becomes a lesson written in words. The next Watch run tests it.</p>
+  <div class="flow">
+    <div><b>1. Play</b>A Watch run finishes</div><div class="arr">→</div>
+    <div><b>2. Reflect</b>Find waits of 30 s or more with other options</div><div class="arr">→</div>
+    <div><b>3. Write</b>One lesson, e.g. "Next time: decode the symbols myself"</div><div class="arr">→</div>
+    <div><b>4. Test</b>The next Watch run uses it</div><div class="arr">→</div>
+    <div><b>5. Judge</b>Better ending or faster? Keep it. Otherwise drop it.</div>
+  </div>
+  <div class="two" style="display:flex;gap:8pt">
+    <div style="flex:1"><img class="shot" src="images/lesson_used.jpg" alt="Lesson used"><div class="cap">Run 2: the pop-up "Aria remembers an earlier game…" appears as she decodes the symbols herself.</div></div>
+    <div style="flex:1"><img class="shot" src="images/ending_learned.jpg" alt="Ending"><div class="cap">Ending screen: "What the team learned": the lesson helped (325 s instead of 330 s) and is kept.</div></div>
+  </div>
+  <img class="shot" src="images/team_journal.jpg" alt="Team Journal" style="width:62%;margin:0 auto">
+  <div class="cap" style="text-align:center">Main menu: the Team Journal with the learning curve (green = lesson kept, red = lesson dropped) and every lesson with its result. "Forget everything" clears it.</div>
+
+  <h3>Why the test is fair</h3>
+  <ul>
+    <li><b>Watch runs are deterministic</b>: with the same lessons, the run plays exactly the same. So any change in the result is caused by the lesson.</li>
+    <li><b>One lesson at a time</b>, like a science experiment, so we know which lesson caused the change.</li>
+    <li><b>Ending first, then time</b>: The Light Returns &gt; An Unexpected Route &gt; A Costly Victory &gt; The Last Storm. A lesson that wins a better ending, or the same ending sooner, is kept.</li>
+    <li><b>Game Mode</b> teammates use kept lessons, but new lessons are only tested in Watch runs, because a player changes too much for a fair test.</li>
+  </ul>
+</section>
+
+<section class="page">
+  <h2>4. Who did what (work division)</h2>
+  <p>Each member took the part of the two features that matches their role in the project.
+    <span class="badge b-a">Feature 1: Mind View</span> <span class="badge b-b">Feature 2: Team Journal</span></p>
+  <table>
+    <tr><th style="width:22%">Member (role)</th><th>Feature 1: Mind View</th><th>Feature 2: Team Journal</th></tr>
+    <tr><td><b>Devansh Patel</b><br><span class="small mut">Backend &amp; API</span></td><td>Added each character's mind to the game state API</td><td>Journal API (<code>/api/journal</code>, reset); hooked the journal into the server so every finished run is recorded once</td></tr>
+    <tr><td><b>Devesh Singh</b><br><span class="small mut">Database &amp; simulation</span></td><td>Saving the decision trace and waiting log with each run</td><td>New database tables (lessons, journal runs) and their read/write functions; checked that Watch runs are repeatable</td></tr>
+    <tr><td><b>Anurag Patel</b><br><span class="small mut">Story, adaptation, endings</span></td><td>Defined which situations count as a "wait" vs real progress</td><td>Reflection rules (find long waits → lesson), ending ranking, and the keep/drop decision</td></tr>
+    <tr><td><b>Siddhank Kashyap</b><br><span class="small mut">Memory, knowledge, testing</span></td><td>Beliefs-vs-reality comparison, memory list, fix for the "used item" belief bug</td><td>16 new backend tests + 5 frontend tests, live browser check, research links, this report</td></tr>
+    <tr><td><b>Himanshu Srivastava</b><br><span class="small mut">LLM &amp; character agents</span></td><td>Decision trace inside the agent loop: options, who chose, the AI's one-line reason</td><td>Planner applies a lesson only in its own situation, using only valid options; "lesson applied" event</td></tr>
+    <tr><td><b>Aniket Mondal</b><br><span class="small mut">Map &amp; user interface</span></td><td>Mind View panel, "Look inside …'s head" buttons, purple bubbles and ghosts on the map</td><td>Team Journal on the main menu, learning curve chart, "What the team learned" on the ending screen</td></tr>
+  </table>
+
+  <div class="member"><h3>Devansh Patel</h3><div class="role">Backend and API</div>
+    <p>Added a <b>mind</b> section to every character in the state the frontend receives. Built two new endpoints: <b>GET /api/journal</b> (all lessons and finished runs) and <b>POST /api/journal/reset</b>. Connected the journal to the run manager so that when a run finishes it is recorded exactly once, and every new run starts with the right lessons.</p>
+    <p class="files">api/journal.py · services/run_manager.py · schemas/views.py · main.py</p></div>
+
+  <div class="member"><h3>Devesh Singh</h3><div class="role">Database and simulation loop</div>
+    <p>Created two new tables: <b>lessons</b> (text, status trying/kept/rejected, before and after times) and <b>journal_runs</b> (the learning curve). Wrote the functions that add, update, list and reset them. Checked that a Watch run is fully repeatable, which is what makes the lesson test fair.</p>
+    <p class="files">persistence/tables.py · persistence/repository.py · engine/run.py</p></div>
+
+</section>
+
+<section class="page">
+  <div class="member"><h3>Anurag Patel</h3><div class="role">Story design, adaptation logic, endings</div>
+    <p>Wrote the reflection rules: a wait of 30 s or more, where the rules offered another option, becomes a candidate lesson. Defined the ranking of endings and the judge: keep a lesson only if it reaches a better ending, or the same ending sooner. Only one lesson is tested at a time, and a run with a dropped lesson does not create new lessons.</p>
+    <p class="files">agents/learning.py · services/journal.py</p></div>
+  <div class="member"><h3>Siddhank Kashyap</h3><div class="role">Memory, knowledge, research, documentation and testing</div>
+    <p>Built the <b>beliefs vs reality</b> comparison: roads, items, temple, lighthouse, flood and teammates, without revealing hidden routes or live traps. Built the memory list (newest first, with source). Found and fixed the bug where a character still believed it carried an item it had used. Wrote 16 backend tests and 5 frontend tests, ran the live browser check, and linked both features to the research papers.</p>
+    <p class="files">schemas/views.py (mind_view) · engine/knowledge.py · tests/test_mind_view.py · tests/test_learning.py · mind.test.tsx</p></div>
+
+  <div class="member"><h3>Himanshu Srivastava</h3><div class="role">LLM integration and character agents</div>
+    <p>Recorded the <b>decision trace</b> in the agent's observe → decide → act loop: all options, the chosen one, who chose it, and the AI's one-line reason. Recorded every waiting episode with its alternatives. Made the planner apply a lesson only in the exact situation it was learned in, and only if its preferred option is still valid. The AI's choice still comes first, then lessons, then the default rule.</p>
+    <p class="files">agents/character_agent.py · agents/planner.py · models/mind.py · services/run_manager.py</p></div>
+
+  <div class="member"><h3>Aniket Mondal</h3><div class="role">2D map, user interface and player controls</div>
+    <p>Built the <b>Mind View panel</b> (why this plan, believes vs reality, lessons, memories) and the "Look inside …'s head" buttons with an "out of date" counter. Drew the <b>purple map layer</b>: thought bubbles on roads the character is wrong about, and ghosts where it wrongly thinks teammates or items are. Built the <b>Team Journal</b> card with the learning-curve chart, and the "What the team learned" box on the ending screen.</p>
+    <p class="files">MindPanel.tsx · TeamPanel.tsx · IslandScene.ts · TeamJournal.tsx · MainMenu.tsx · EndingScreen.tsx</p></div>
+
+</section>
+
+<section class="page">
+  <h2>5. Demo plan for tomorrow (about 4 minutes)</h2>
+  <div class="box say">
+    <ol>
+      <li>Main menu: show the empty <b>Team Journal</b> ("no Watch runs yet"). If needed, press <b>Forget everything</b> first.</li>
+      <li>Press <b>Watch the AI play</b>. At about 1:40, press <b>Pause</b>, open the <b>Team</b> tab, and click <b>Look inside Meera's head</b>: "Meera still thinks the bridge is broken, because she was in the forest when Kabir fixed it." Point to the purple bubble and the ghosts on the map.</li>
+      <li>Click Aria's face at the top of the panel: show "Wait at the temple" chosen by her rules, with "decode the symbols myself" as another option.</li>
+      <li>Resume and use <b>Skip 30s</b> to the end. On the ending screen show <b>What the team learned</b>: Aria wrote a lesson.</li>
+      <li>Press <b>Play again</b>. Watch the pop-up <b>"Aria remembers an earlier game"</b>, then open Aria's Mind View: "Lesson from a past game".</li>
+      <li>At the end: "It helped: 5 s sooner. Lesson kept." Back on the main menu, show the <b>learning curve</b>.</li>
+    </ol>
+  </div>
+  <h2 style="margin-top:12pt">6. Questions sir may ask</h2>
+  <div class="qa">
+    <p class="q">Q. Is the Mind View just showing the real game state?</p>
+    <p>No. It shows what the <b>character</b> believes, which is often wrong or old, next to the truth. That is why Meera can be wrong about the bridge. Characters plan only from their beliefs.</p>
+    <p class="q">Q. Can the Mind View cheat by showing hidden things?</p>
+    <p>No. It only compares facts the player can already see on the map. Hidden routes and undiscovered traps are never revealed.</p>
+    <p class="q">Q. How does the team "learn"? Is it machine learning?</p>
+    <p>It is learning from experience in words, like the Reflexion and Generative Agents papers. After a run, a character reflects on long waits and writes a lesson. The next run tests it, and we keep it only if the measured result improves. No model is trained.</p>
+    <p class="q">Q. How do you know the lesson caused the improvement?</p>
+    <p>Watch runs are deterministic, and we test one lesson at a time. With the same lessons the run is identical, so the only difference between the two runs is the lesson.</p>
+    <p class="q">Q. Can a bad lesson break the game?</p>
+    <p>No. A lesson can only choose one of the options the rules already allow, and the rules engine still checks every action. Bad lessons are also dropped automatically. Run 3 was 35 s slower, so that lesson was dropped.</p>
+    <p class="q">Q. Why is the improvement only 5 seconds?</p>
+    <p>The starting plan was already tuned well. The value is the method: try, measure, keep or drop. With more situations and twists, there is more to learn.</p>
+    <p class="q">Q. Does it use the AI (LLM)?</p>
+    <p>Both features work without any AI, so the game always runs. When the AI is on, the Mind View also shows the AI's one-line reason for its choice.</p>
+    <p class="q">Q. What will you add next?</p>
+    <p>Learning from Game Mode failures (for example a trap sprung or the chamber flooding), and an AI-written version of each lesson in the character's own voice.</p>
+  </div>
+</section>
+
+</body>
+</html>

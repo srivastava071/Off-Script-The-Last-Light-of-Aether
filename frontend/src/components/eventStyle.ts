@@ -32,6 +32,7 @@ const STYLES: Record<string, Style> = {
   signalled: { icon: Megaphone, tone: "teal", group: "talk" },
   plan_changed: { icon: Lightbulb, tone: "muted", group: "adapt" },
   llm_deliberation: { icon: Brain, tone: "teal", group: "adapt" },
+  lesson_applied: { icon: BookOpen, tone: "amber", group: "adapt" },
   action_started: { icon: Wrench, tone: "muted", group: "action" },
   action_failed: { icon: ShieldAlert, tone: "danger", group: "action" },
   route_discovered: { icon: Compass, tone: "amber", group: "story" },
@@ -79,7 +80,7 @@ export function isHeadline(e: WorldEvent): boolean {
   return isAdaptation(e) || [
     "story_beat", "gate_opened", "flood_warning", "chamber_flooded", "storm_warning", "director_note",
     "route_blocked", "bridge_repaired", "route_discovered", "lighthouse_activated", "help_accepted", "help_declined",
-    "order_refused", "order_failed", "order_completed", "story_twist",
+    "order_refused", "order_failed", "order_completed", "story_twist", "lesson_applied",
   ].includes(e.kind);
 }
 

@@ -115,6 +115,7 @@ class EventKind(StrEnum):
     DIRECTOR_NOTE = "director_note"
     STORM_WARNING = "storm_warning"
     LLM_DELIBERATION = "llm_deliberation"
+    LESSON_APPLIED = "lesson_applied"  # a character acts on a lesson from an earlier game
     # Player commands (typed or spoken), relayed by radio
     COMMAND_GIVEN = "command_given"
     ORDER_ACCEPTED = "order_accepted"

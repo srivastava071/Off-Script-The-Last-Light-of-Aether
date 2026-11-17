@@ -188,6 +188,8 @@ def perceive(world: WorldState, cid: str) -> None:
     for oid, ob in list(b.objects.items()):
         if ob.location_id == here and (oid not in world.objects or world.objects[oid].location_id != here):
             b.objects[oid] = ObjectBelief(as_of=now)  # gone from here; whereabouts unknown
+        elif ob.carried_by == cid and (oid not in world.objects or world.objects[oid].carried_by != cid):
+            b.objects[oid] = ObjectBelief(as_of=now)  # no longer in my hands (used up or handed over)
     for obj in world.objects.values():
         holder = obj.carried_by
         if obj.location_id == here or (holder is not None and world.characters[holder].location_id == here):
@@ -223,7 +225,7 @@ def observers(world: WorldState, event: WorldEvent) -> list[str]:
 def observe(world: WorldState, events: list[WorldEvent]) -> None:
     """Turn freshly recorded world events into memories and belief updates for those who saw them."""
     for event in events:
-        if event.kind in (EventKind.PLAN_CHANGED, EventKind.LLM_DELIBERATION):
+        if event.kind in (EventKind.PLAN_CHANGED, EventKind.LLM_DELIBERATION, EventKind.LESSON_APPLIED):
             continue  # internal thinking, not something others can see
         for cid in observers(world, event):
             remember(world, cid, event.description, source="self" if event.actor == cid else "observed",

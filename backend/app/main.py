@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app import __version__
-from app.api import health, runs, scenario
+from app.api import health, journal, runs, scenario
 from app.core.config import REPO_ROOT, Settings, get_settings
 from app.persistence.repository import RunRepository, make_engine
 from app.services.llm import LLMService
@@ -43,6 +43,7 @@ def create_app(settings: Settings | None = None, llm: LLMService | None = None) 
     )
     app.include_router(health.router)
     app.include_router(runs.router)
+    app.include_router(journal.router)
     app.include_router(scenario.router)
     # When the frontend has been built (npm run build), serve it from here too, so a single address
     # (e.g. one ngrok tunnel) carries both the game page and its /api. Mounted last: /api wins.

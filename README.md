@@ -80,6 +80,17 @@ keeps running on the server).
 - **Event log:** filter by Story, Adaptation (plan changes caused by new information, and AI choices)
   or Dialogue.
 - Default Mode adds **Pause** and **Skip 30s**; Game Mode cannot be paused.
+- **Mind View (Team tab → "Look inside … head"):** why a character chose its plan (the options its rules
+  offered, and whether the rules, the AI, a lesson or your order picked one), what it believes compared with
+  reality, and its recent memories. On the map, purple bubbles and ghosts show where its picture of the island
+  is out of date.
+- **Team journal (main menu):** after every Watch run each character reflects on long waits and writes one
+  lesson to try next time; the next Watch run tests it and keeps it only if the beacon is lit sooner or with a
+  better ending. Game Mode teammates use kept lessons. *Forget everything* clears the journal.
+- **Gameplay graphs:** a live *Graphs* tab during a game, the same graphs on the ending screen, and a
+  *Gameplay graphs* page from the main menu: who did what and when (timeline), mission progress over time,
+  how each character spent its time, decisions per character, and, across all finished runs, game length per
+  run and how often each ending happened.
 
 ## API in brief
 
@@ -97,6 +108,9 @@ keeps running on the server).
 | POST | `/api/runs/{id}/advance` | Fast-forward 1–120 ticks (time only moves forward) |
 | POST | `/api/runs/{id}/pause` | Pause/resume — Default Mode only |
 | POST | `/api/runs/{id}/restart` | Start over as a new run (the old one is abandoned) |
+| GET | `/api/runs/{id}/analytics` | Gameplay graph data: timelines, mission progress, decisions per character |
+| GET | `/api/journal` | Team journal: lessons (trying / kept / rejected) and finished runs (no token) |
+| POST | `/api/journal/reset` | Forget every lesson |
 
 Every run-specific call needs the header `X-Run-Token: <token>`. Rule rejections return `200` with
 `"ok": false` and an explanation; HTTP errors mean a protocol problem (401, 404, 409, 422, 429).

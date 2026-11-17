@@ -4,12 +4,14 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Briefing, hasBeenBriefed } from "./components/HowToPlay";
 import { CharacterSelect } from "./pages/CharacterSelect";
 import { GameScreen } from "./pages/GameScreen";
+import { GraphsPage } from "./pages/GraphsPage";
 import { MainMenu } from "./pages/MainMenu";
 import { api, loadSession, saveSession, type RunSession } from "./services/api";
 import type { CharacterId, Health, StateView } from "./types/api";
 import type { Scenario } from "./types/scenario";
 
-type Screen = { name: "menu" } | { name: "select" } | { name: "brief"; player: CharacterId } | { name: "play"; session: RunSession };
+type Screen = { name: "menu" } | { name: "select" } | { name: "graphs" } | { name: "brief"; player: CharacterId }
+  | { name: "play"; session: RunSession };
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>({ name: "menu" });
@@ -77,6 +79,9 @@ export default function App() {
       </ErrorBoundary>
     );
   }
+  if (screen.name === "graphs") {
+    return <GraphsPage latest={saved} onBack={toMenu} />;
+  }
   if (screen.name === "brief") {
     // First Game Mode run on this device: explain the game before the storm clock starts.
     return <Briefing scenario={scenario} player={screen.player} busy={busy}
@@ -89,6 +94,7 @@ export default function App() {
   return (
     <MainMenu scenario={scenario} health={health} canResume={!!saved} busy={busy} error={error}
       onDefault={() => void begin("default")} onGame={() => { setError(null); setScreen({ name: "select" }); }}
-      onResume={() => saved && setScreen({ name: "play", session: saved })} />
+      onResume={() => saved && setScreen({ name: "play", session: saved })}
+      onGraphs={() => setScreen({ name: "graphs" })} />
   );
 }

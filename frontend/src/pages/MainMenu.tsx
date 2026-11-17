@@ -1,5 +1,6 @@
-import { Eye, Gamepad2, Play } from "lucide-react";
+import { BarChart3, Eye, Gamepad2, Play } from "lucide-react";
 
+import { TeamJournal } from "../components/TeamJournal";
 import { ToonAvatar } from "../components/ToonAvatar";
 import { AiModeBadge } from "../components/TopBar";
 import { Badge, Button, Panel } from "../components/ui";
@@ -57,7 +58,7 @@ function HeroIsland({ scenario }: { scenario: Scenario | null }) {
   );
 }
 
-export function MainMenu({ scenario, health, canResume, busy, error, onDefault, onGame, onResume }: {
+export function MainMenu({ scenario, health, canResume, busy, error, onDefault, onGame, onResume, onGraphs }: {
   scenario: Scenario | null;
   health: Health | null;
   canResume: boolean;
@@ -66,6 +67,7 @@ export function MainMenu({ scenario, health, canResume, busy, error, onDefault, 
   onDefault: () => void;
   onGame: () => void;
   onResume: () => void;
+  onGraphs: () => void;
 }) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
@@ -102,6 +104,9 @@ export function MainMenu({ scenario, health, canResume, busy, error, onDefault, 
             <span className="text-xs text-muted">Sit back: the team solves it alone</span>
           </div>
         </div>
+        <div className="mt-3 flex justify-center">
+          <Button variant="subtle" onClick={onGraphs} disabled={busy}><BarChart3 size={16} /> Gameplay graphs</Button>
+        </div>
         {error && <p role="alert" className="mt-4 text-sm text-danger">{error}</p>}
         <div className="mt-4 flex justify-center"><AiModeBadge health={health} /></div>
       </section>
@@ -123,6 +128,10 @@ export function MainMenu({ scenario, health, canResume, busy, error, onDefault, 
             </div>
           </Panel>
         ))}
+      </div>
+
+      <div className="mt-8">
+        <TeamJournal />
       </div>
     </div>
   );
